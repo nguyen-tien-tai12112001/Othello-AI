@@ -2,12 +2,11 @@
 /*Bàn cờ*/
 function Chessboard() {
   var _this = this;
-
-  var pieces; //yếu tố quân cờ
+  var pieces; //mảng chứa các quân cờ
   var piecesnum; //Phần tử hiển thị số màu đen và trắng
   var side; //Cho biết phần tử của trình phát
 
-  _this.toDown = null; //Nằm xuống
+  _this.toDown = null; //Khi nhấn xuống
 
   //Ràng buộc sự kiện nhấp chuột
   function bindEvent(td) {
@@ -15,6 +14,7 @@ function Chessboard() {
       (function (i) {
         td[i].onclick = function () {
           if (pieces[i].className == "prompt")
+            //Hiển thị dấu chấm gợi ý để đi
             //Đây thực sự là chơi cờ khi bạn nhấp vào
             _this.toDown(i); //Hướng dẫn chơi cờ vua
         };
@@ -35,13 +35,13 @@ function Chessboard() {
 
     html += "</table>";
     obj.innerHTML = html;
-    pieces = obj.getElementsByTagName("div");
+    pieces = obj.getElementsByTagName("div"); //lấy tất cả các ô cờ đưa vào mảng
     bindEvent(obj.getElementsByTagName("td"));
 
-    piecesnum = document.getElementById("console").getElementsByTagName("span");
+    piecesnum = document.getElementById("console").getElementsByTagName("span"); //đen và trắng
     side = {
-      1: document.getElementById("side1"),
-      "-1": document.getElementById("side2"),
+      1: document.getElementById("side1"), //đen
+      "-1": document.getElementById("side2"), //trắng
     };
   };
   //Cập nhật bảng
@@ -54,6 +54,7 @@ function Chessboard() {
     if (m.newPos != -1) pieces[m.newPos].className += " newest";
     piecesnum[0].innerHTML = m.black;
     piecesnum[1].innerHTML = m.white;
+
     side[m.side].className = "cbox side";
     side[-m.side].className = "cbox";
   };
@@ -67,10 +68,10 @@ function Othello() {
   var history = [];
 
   var zobrist = new Zobrist();
-  _this.aiSide = 0; //先行方：1: 电脑为黑棋,  -1: 电脑为白棋,  0: 双人对战 2: 电脑自己对战
+  _this.aiSide = 0; //Động lực đầu tiên: 1: Máy tính màu đen, -1: máy tính màu trắng, 0: trận chiến hai người 2: máy tính đấu với chính nó
 
   var aiRuning = false; //AI.....
-  var aiRuningObj = document.getElementById("airuning"); //Đó là để chỉ ra rằng một hộp nhắc xuất hiện
+  var aiRuningObj = document.getElementById("airuning"); //Đó là để chỉ ra rằng một hộp nhắc xuất hiện AI......
   var passObj = document.getElementById("pass"); //Trả lại cái này khi không có cờ
 
   var timer; //Id hẹn giờ: thời gian trò chơi
@@ -88,15 +89,16 @@ function Othello() {
 
     //Khởi tạo bảng
     map = [];
-    for (var i = 0; i < 64; i++) map[i] = 0; //空格为 0
+    for (var i = 0; i < 64; i++) map[i] = 0; //Không gian là 0
     map[28] = map[35] = 1; //Đen 1
-    map[27] = map[36] = -1; //Trắng -1
 
+    map[27] = map[36] = -1; //Trắng -1
     map.black = map.white = 2; //Số lượng tốt đen và trắng
-    map.space = 60; //Số lượng khoảng trống (64 ô, nhưng ở đầu có 4 ô)
+    map.space = 60; //Số lượng khoảng trống (64 ô, nhưng có 4 ô đã được khởi tạo)
 
     map.frontier = [];
-    var tk = [18, 19, 20, 21, 26, 29, 34, 37, 42, 43, 44, 45]; //Dữ liệu tạm thời để khởi tạo
+    var tk = [18, 19, 20, 21, 26, 29, 34, 37, 42, 43, 44, 45]; //Dữ liệu tạm thời để khởi tạo,đây là
+    //các khí xung quanh 4 cờ ban đầu
     for (var i = 0; i < 12; i++) map.frontier[tk[i]] = true;
 
     map.side = 1; //Kỳ thủ hiện tại (1. Cờ đen 0. Cờ trắng)
@@ -115,13 +117,13 @@ function Othello() {
 
   function update() {
     //Mỗi khi bảng được cập nhật: hãy đánh giá xem nó có thể hoạt động hay không,
-    var aiAuto = _this.aiSide == map.side || _this.aiSide == 2;
+    var aiAuto = _this.aiSide == map.side;
+    // || _this.aiSide == 2;
     //Điều này có nghĩa là aiAuto = quá trình sau (bên ai = bên giữ bản đồ hiện tại; hoặc bên ai == 2, nghĩa là khi máy tính đang đấu với chính nó, thì nó trở thành sự thật)
     _this.findLocation(map);
-    setAIRunStatus(false); //Đừng thể hiện rằng ai đang tính toán
+    setAIRunStatus(false);
     setPassStatus(false);
     board.update(map, aiAuto); //ai chơi cờ vua: vượt qua trong bản đồ và chức năng aiAuto
-    // console.log(map.nextIndex)
 
     if (map.space == 0 || (map.nextNum == 0 && map.prevNum == 0)) {
       //Bàn cờ đầy hoặc không người chơi nào di chuyển được
@@ -134,7 +136,7 @@ function Othello() {
         _this.pass(map);
         update();
         setPassStatus(true);
-      }, 450);
+      }, 500);
       return;
     }
 
@@ -143,7 +145,7 @@ function Othello() {
       aiRuning = true;
       timer = setTimeout(function () {
         setAIRunStatus(true); //AI bắt đầu chạy
-        timer = setTimeout(aiRun, 50); //Nơi này là ai di chuyển
+        timer = setTimeout(aiRun, 1000); //Nơi này là ai di chuyển
       }, 400);
     }
   }
@@ -165,7 +167,6 @@ function Othello() {
     //Hai lần di chuyển đầu tiên được thực hiện ngẫu nhiên
     else _this.go(map.nextIndex[(Math.random() * map.nextIndex.length) >> 0]);
   }
-  // document.getElementById("ai").onclick = aiRun;
 
   function gameOver() {
     setAIRunStatus(false); //Đừng thể hiện rằng ai đang tính toán
@@ -177,10 +178,10 @@ function Othello() {
         map.white +
         " \n\n" +
         (map.black == map.white
-          ? "平局!!!"
+          ? "!!!"
           : map.black > map.white
-          ? "Chiến thắng cờ đen!!!"
-          : "Chiến thắng cờ trắng!!!")
+          ? "Cờ đen chiến thắng!!!"
+          : "Cờ trắng chiến thắng!!!")
     );
   }
 
@@ -255,7 +256,7 @@ function Othello() {
     }
 
     var ne = m.next[n];
-    var l = ne.length;
+    var l = ne?.length;
     for (var i = 0; i < l; i++) {
       nm[ne[i]] = m.side; //Cầm đồ ngược
       zobrist.set(nm.key, 2, ne[i]);
@@ -290,6 +291,7 @@ function Othello() {
     aiRuning = false;
 
     var rev = map.next[n];
+    console.log("🚀 ~ file: ocjs.js ~ line 294 ~ Othello ~ map2", map);
 
     map = _this.newMap(map, n);
     map.newRev = rev;
@@ -336,6 +338,7 @@ function Zobrist() {
       zarr[0][pn][1] ^ zarr[1][pn][1],
     ]; // Khi lật từng vị trí
   }
+  // console.log(typeof (zarr[0][1][0] ^ zarr[1][1][0]));
 
   function rnd() {
     //Nhận một số ngẫu nhiên 32 bit
@@ -371,38 +374,21 @@ document.getElementById("ok").onclick = function () {
   var ro = document.getElementById("selectbox").getElementsByTagName("input");
 
   othe.aiSide = ro[0].checked ? -1 : 1; //Đi đầu tiên
+  //-1 người đi trước
+  //1 máy đi trước
 
   for (var i = 2; i < ro.length; i++) if (ro[i].checked) break;
   othe.aiNum = i - 1;
   if (i == 2) {
     ai6.calculateTime = 20;
-    ai6.outcomeDepth = 7;
-    othe.play();
-  } else if (i == 3) {
-    ai6.calculateTime = 5000;
-    ai6.outcomeDepth = 15;
-    othe.play();
-  } else if (i == 4) {
-    //ai6.calculateTime = 5000
-    //ai6.outcomeDepth = 15
-    othe.play();
-  } else if (i == 5) {
-    //ai6.calculateTime = 5000
-    //ai6.outcomeDepth = 15
-    othe.play();
-  } else if (i == 6) {
-    //ai6.calculateTime = 5000
-    //ai6.outcomeDepth = 15
-    othe.play();
-  } else if (i == 7) {
-    //ai6.calculateTime = 5000
-    //ai6.outcomeDepth = 15
-    othe.play();
-  } else if (i == 8) {
-    //ai6.calculateTime = 5000
-    //ai6.outcomeDepth = 15
+    ai6.outcomeDepth = 6;
     othe.play();
   }
+  // else if (i == 3) {
+  //   ai6.calculateTime = 5000;
+  //   ai6.outcomeDepth = 15;
+  //   othe.play();
+  // }
 };
 document.getElementById("cancel").onclick = function () {
   //Click cancel để thoát
@@ -412,10 +398,3 @@ document.getElementById("cancel").onclick = function () {
 document.getElementById("back").onclick = function () {
   othe.historyBack();
 };
-
-// document.getElementById("no3d").onclick = function () {
-//   //3D棋盘切换
-//   var desk = document.getElementById("desk");
-//   desk.className = desk.className == "fdd" ? "" : "fdd";
-//   this.innerHTML = desk.className == "fdd" ? "2D" : "3D";
-// };

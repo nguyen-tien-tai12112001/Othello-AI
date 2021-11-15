@@ -3,7 +3,6 @@
 /*AI*/
 function AI6() {
   var _this = this;
-
   _this.calculateTime = 1000; //Giới hạn thời gian tính toán của mỗi lần di chuyển
   _this.outcomeDepth = 14; //Độ sâu tìm kiếm cuối cùng
   var outcomeCoarse = 15; //Độ sâu tìm kiếm mẫu tìm kiếm cuối cùng
@@ -13,14 +12,16 @@ function AI6() {
   var weight = [6, 11, 2, 2, 3];
 
   var rnd = [
+    // Đỉnh ở góc
     { s: 0, a: 1, b: 8, c: 9, dr: [1, 8] },
     { s: 7, a: 6, b: 15, c: 14, dr: [-1, 8] },
     { s: 56, a: 57, b: 48, c: 49, dr: [1, -8] },
     { s: 63, a: 62, b: 55, c: 54, dr: [-1, -8] },
   ];
 
-  _this.history = [[], []]; //Bảng khai sáng lịch sử
+  _this.history = [[], []]; //Bảng lịch sử
   for (var i = 0; i < 2; i++)
+    // do 2 kiểu chơi
     for (var j = 0; j <= 60; j++)
       _this.history[i][j] = [
         0, 63, 7, 56, 37, 26, 20, 43, 19, 29, 34, 44, 21, 42, 45, 18, 2, 61, 23,
@@ -37,51 +38,53 @@ function AI6() {
   }
 
   _this.startSearch = function (m) {
-    //main：Bắt đầu tìm kiếm cây trò chơi: tìm kiếm tối đa và tối thiểu (chức năng định giá）
-    //+alphabeta cắt tỉa+mtd Lời gọi thuật toán
-
-    // hash = new Transposition();
-    // console.profile('Trình phân tích hiệu suất một');
+    //main：Bắt đầu tìm kiếm cây trò chơi: tìm kiếm minimax (hàm đánh giá）
+    //+alphabeta + mtd
     var f = 0;
     if (m.space <= _this.outcomeDepth) {
       //Bắt đầu tìm kiếm khi nó nhỏ hơn độ sâu (nghĩa là giai đoạn kết thúc cuối cùng)
       //Thực hiện tìm kiếm cuối cùng
-      outTime = new Date().getTime() + 600000; //Không giới hạn thời gian cho lần tìm kiếm cuối cùng
+      // outTime = new Date().getTime() + 600000; //Không giới hạn thời gian cho lần tìm kiếm cuối cùng
       maxDepth = m.space;
-      //console.time("Hẹn giờ2");
+
       if (maxDepth >= outcomeCoarse)
         f = alphaBeta(m, maxDepth, -Infinity, Infinity);
       //alpha-betaCắt tỉa：α=-∞；β=+∞
       else f = mtd(m, maxDepth, f); //mtd(f)
-      //console.timeEnd("Hẹn giờ2");
-      console.log("终局搜索结果：", maxDepth, m.space, m.side, f * m.side); //Kết quả tìm kiếm cuối cùng
+
+      console.log(
+        "Kết quả tìm kiếm cuối cùng:",
+        maxDepth,
+        m.space,
+        m.side,
+        f * m.side
+      ); //Kết quả tìm kiếm cuối cùng
       return hash.getBest(m.key); //Phương thức getBest của bảng thay thế：
     }
 
     outTime = new Date().getTime() + _this.calculateTime;
     maxDepth = 0;
-    //console.time("hẹn giờ2");
+
     try {
       while (maxDepth < m.space) {
         f = mtd(m, ++maxDepth, f); //mtd(f)
-        // f = alphaBeta(m, ++maxDepth, -Infinity, Infinity);
+
         var best = hash.getBest(m.key);
         console.log(maxDepth, f * m.side, best);
       }
     } catch (eo) {
       if (eo.message != "time out") throw eo;
     }
-    //console.timeEnd("hẹn giờ 2");
-    // console.profileEnd();
-    console.log("搜索结果：", maxDepth - 1, m.space, m.side, f * m.side); //kết quả tìm kiếm
+
+    console.log("kết quả tìm kiếm:", maxDepth - 1, m.space, m.side, f * m.side); //kết quả tìm kiếm
     return best; //Tọa độ bước tốt nhất là gì?
   };
 
   function evaluation(m) {
-    //Chức năng định giá
+    //Hàm đánh giá
     var corner = 0,
       steady = 0,
-      uk = {}; //Chức năng định giá，uk
+      uk = {}; //Chức năng định giá uk
     for (var i = 0, v, l = rnd.length; (v = rnd[i]), i < l; i++) {
       if (m[v.s] == 0) {
         corner += m[v.a] * -3; //Nguy hiểm thứ cấp
@@ -90,7 +93,7 @@ function AI6() {
         continue;
       }
       corner += m[v.s] * 15; //góc
-      steady += m[v.s]; //Còi cũng ổn định
+      steady += m[v.s];
 
       for (var k = 0; k < 2; k++) {
         if (uk[v.s + v.dr[k]]) continue;
@@ -100,10 +103,9 @@ function AI6() {
           var t = m[v.s + v.dr[k] * j];
           if (t == 0) break;
           else if (eb && t == m[v.s]) steady += t;
-          //Chất ổn định
           else {
             eb = false;
-            tmp += t; //Chất ổn định
+            tmp += t;
           }
         }
         if (j == 7 && m[v.s + v.dr[k] * 7] != 0) {
@@ -133,6 +135,7 @@ function AI6() {
       frontier * weight[2] +
       mobility * weight[3] +
       parity * weight[4];
+
     return rv * m.side;
   }
 
@@ -144,20 +147,17 @@ function AI6() {
   }
 
   function mtd(m, depth, f) {
-    //MTD(f)thuật toán
+    //https://askeplaat.wordpress.com/534-2/mtdf-algorithm/
     //Thuật toán này là sự tối ưu hóa của việc cắt tỉa alpha
     var lower = -Infinity;
     var upper = Infinity;
     do {
       var beta = f == lower ? f + 1 : f; // Xác định giá trị heuristic
-      f = alphaBeta(m, depth, beta - 1, beta); // Kiểm tra cửa sổ độ rộng bằng không
+      f = alphaBeta(m, depth, beta - 1, beta);
       if (f < beta) upper = f;
       else lower = f;
     } while (lower < upper);
-    if (f < beta)
-      // Nếu lần tìm kiếm cuối cùng chỉ là giới hạn trên,
-      //bạn cần phải tìm kiếm lại để đảm bảo rằng bạn nhận được chính xác nước đi tốt nhất
-      f = alphaBeta(m, depth, f - 1, f);
+
     return f;
   }
 
@@ -240,9 +240,7 @@ function AI6() {
 
 function Transposition() {
   //Bảng hoán vị
-
   var _this = this;
-
   var HASH_SIZE = (1 << 19) - 1; //Số đơn vị thay thế là 524287
   var data = new Array(HASH_SIZE + 1);
 
